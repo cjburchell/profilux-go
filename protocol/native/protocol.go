@@ -21,6 +21,7 @@ func codeError(code byte) error {
 	return errors.WithStack(fmt.Errorf("code error %d", code))
 }
 
+// NewProtocol creates a http protocol
 func NewProtocol(address string, port int, controller int) (protocol.IProtocol, error) {
 	con, err := newConnection(address, port)
 	if err != nil {
@@ -230,19 +231,19 @@ func verifyDataPacket(reply []byte, code int) error {
 		return errProtocol
 	}
 
-	if reply[4] == EOT {
+	if reply[4] == eot {
 		log.Warn("Unexpected Message: Empty Reply")
 		return errProtocol
 	}
 
-	if reply[4] == STX {
-		if reply[5] == NAK {
+	if reply[4] == stx {
+		if reply[5] == nak {
 			errorCode := reply[6]
 			return codeError(errorCode)
 		}
 
-		if reply[5] == ACK {
-			log.Warn("Unexpected Message: ACK")
+		if reply[5] == ack {
+			log.Warn("Unexpected Message: ack")
 			return errProtocol
 		}
 
@@ -267,18 +268,18 @@ func verifyAckPacket(reply []byte) error {
 		return errProtocol
 	}
 
-	if reply[4] == EOT {
+	if reply[4] == eot {
 		log.Warn("Unexpected Message: Empty Reply")
 		return errProtocol
 	}
 
-	if reply[4] == STX {
-		if reply[5] == NAK {
+	if reply[4] == stx {
+		if reply[5] == nak {
 			errorCode := reply[6]
 			return codeError(errorCode)
 		}
 
-		if reply[5] != ACK {
+		if reply[5] != ack {
 			replyCode := getGetMessageCode(reply)
 			log.Warnf("Unexpected Message: Code %d", replyCode)
 			return errProtocol

@@ -21,18 +21,18 @@ const (
 	//Blockitems1To10Vint           = 10
 	//BlockitemsIlluminationchannel = 8
 	//BlockitemsProglogic           = 8
-	BlockitemsReminder = 4
+	blockItemsReminder = 4
 	//BlockitemsSensorstates        = 8
 	//BlockitemsSwitchplug          = 24
 	//BlockitemsTimer               = 12
 	//Blocksize1To10Vint            = 3
 	//BlocksizeIlluminationchannel  = 28
 	//BlocksizeProglogic            = 4
-	BlocksizeReminder = 12
+	blockSizeReminder = 12
 	//BlocksizeSensorstates         = 8
 	//BlocksizeSwitchplug           = 1
 	//BlocksizeTimer                = 21
-	MegablockSize  = 1000
+	megaBlockSize  = 1000
 	SfFeedPause    = 2
 	SfMaintenance  = 1
 	SfThunderstorm = 3
@@ -40,7 +40,7 @@ const (
 )
 
 func getOffset(index, blockCount, blockSize int) int {
-	return ((index % blockCount) * blockSize) + ((index / blockCount) * MegablockSize)
+	return ((index % blockCount) * blockSize) + ((index / blockCount) * megaBlockSize)
 }
 
 type Controller struct {
@@ -61,13 +61,22 @@ type Controller struct {
 const ProtocolHTTP = "HTTP"
 const ProtocolSocket = "Socket"
 
+// Settings for controller
 type Settings struct {
-	Address           string
-	Port              int
+	// Address of the controller
+	Address string
+
+	// Port of the controller
+	Port int
+
+	// ControllerAddress of the controller
 	ControllerAddress int
-	Protocol          string
+
+	// Protocol to communicate with
+	Protocol string
 }
 
+// NewController  creates a controller
 func NewController(settings Settings) (*Controller, error) {
 
 	var p protocol.IProtocol
@@ -273,12 +282,12 @@ func (controller *Controller) GetReminderCount() (int, error) {
 }
 
 func (controller *Controller) IsReminderActive(index int) (bool, error) {
-	result, err := controller.getData(code.MEM1_NEXTMEM + getOffset(index, BlockitemsReminder, BlocksizeReminder))
+	result, err := controller.getData(code.MEM1_NEXTMEM + getOffset(index, blockItemsReminder, blockSizeReminder))
 	return result != 0xffff, err
 }
 
 func (controller *Controller) GetReminderNext(index int) (time.Time, error) {
-	result, err := controller.getData(code.MEM1_NEXTMEM + getOffset(index, BlockitemsReminder, BlocksizeReminder))
+	result, err := controller.getData(code.MEM1_NEXTMEM + getOffset(index, blockItemsReminder, blockSizeReminder))
 	if err != nil {
 		return time.Now(), err
 	}
@@ -288,15 +297,15 @@ func (controller *Controller) GetReminderNext(index int) (time.Time, error) {
 }
 
 func (controller *Controller) GetReminderIsRepeating(index int) (bool, error) {
-	return controller.getDataBool(code.MEM1_REPEAT + getOffset(index, BlockitemsReminder, BlocksizeReminder))
+	return controller.getDataBool(code.MEM1_REPEAT + getOffset(index, blockItemsReminder, blockSizeReminder))
 }
 
 func (controller *Controller) GetReminderPeriod(index int) (int, error) {
-	return controller.getData(code.MEM1_DAYS + getOffset(index, BlockitemsReminder, BlocksizeReminder))
+	return controller.getData(code.MEM1_DAYS + getOffset(index, blockItemsReminder, blockSizeReminder))
 }
 
 func (controller *Controller) GetReminderText(index int) (string, error) {
-	return controller.getDataText(code.MEM1_TEXT01 + getOffset(index, BlockitemsReminder, BlocksizeReminder))
+	return controller.getDataText(code.MEM1_TEXT01 + getOffset(index, blockItemsReminder, blockSizeReminder))
 }
 
 // endregion
@@ -829,7 +838,7 @@ func (controller *Controller) FeedPause(index int, activate bool) error {
 }
 
 func (controller *Controller) ClearReminder(reminder int) error {
-	offset := getOffset(reminder, BlockitemsReminder, BlocksizeReminder)
+	offset := getOffset(reminder, blockItemsReminder, blockSizeReminder)
 	err := controller.p.SendData(code.MEM1_NEXTMEM+offset, 0xFFFF)
 	if err != nil {
 		log.Errorf(err, "ClearReminder: %s", err.Error())
@@ -844,7 +853,7 @@ func (controller *Controller) ResetReminder(reminder int, period int) error {
 	span := nextReminder.Sub(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
 	data := int(span.Hours() / 24)
 
-	offset := getOffset(reminder, BlockitemsReminder, BlocksizeReminder)
+	offset := getOffset(reminder, blockItemsReminder, blockSizeReminder)
 	err := controller.p.SendData(code.MEM1_NEXTMEM+offset, data)
 	if err != nil {
 		log.Errorf(err, "ClearReminder: %s", err.Error())

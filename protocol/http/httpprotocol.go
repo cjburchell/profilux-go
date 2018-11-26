@@ -17,6 +17,7 @@ type httpProtocol struct {
 	address string
 }
 
+// NewProtocol creates a http protocol
 func NewProtocol(address string, port int) (protocol.IProtocol, error) {
 	var p httpProtocol
 
