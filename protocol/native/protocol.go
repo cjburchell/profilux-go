@@ -1,8 +1,9 @@
 package native
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/cjburchell/profilux-go/protocol"
 
@@ -17,7 +18,7 @@ type nativeProtocol struct {
 var errProtocol = errors.New("protocol error")
 
 func codeError(code byte) error {
-	return fmt.Errorf("code error %d", code)
+	return errors.WithStack(fmt.Errorf("code error %d", code))
 }
 
 func NewProtocol(address string, port int, controller int) (protocol.IProtocol, error) {

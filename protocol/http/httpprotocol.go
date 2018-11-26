@@ -1,16 +1,16 @@
 package http
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/cjburchell/profilux-go/protocol"
-
 	"github.com/cjburchell/yasls-client-go"
+	"github.com/pkg/errors"
+
+	"github.com/cjburchell/profilux-go/protocol"
 )
 
 type httpProtocol struct {
@@ -32,42 +32,43 @@ func (p *httpProtocol) SendData(code, data int) error {
 	log.Debugf("SendData: %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Errorf(err, "SendData: %s", err.Error())
-		return err
+		return errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 
 	reply, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Errorf(err, "SendData: %s", err.Error())
-		return err
+		return errors.WithStack(err)
 	}
 
 	if string(reply) == "Access Denied" {
-		return errors.New("access denied")
+		return errors.WithStack(errors.New("access denied"))
 	}
 
-	command := getCommandFromReply(reply)
+	command, err := getCommandFromReply(reply)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	dataParam := getDataFromReply(reply)
 
 	if command != code {
-		return fmt.Errorf("unexpected comand reply: %d", command)
+		return errors.WithStack(fmt.Errorf("unexpected comand reply: %d", command))
 	}
 
 	if strings.HasPrefix(dataParam, "NACK") {
-		return fmt.Errorf("error in command: %d Reply: %s", command, string(reply))
+		return errors.WithStack(fmt.Errorf("error in command: %d Reply: %s", command, string(reply)))
 	}
 
 	if !strings.HasPrefix(dataParam, "ACK") {
-		return errors.New("unexpected message: Missing ACK")
+		return errors.WithStack(errors.New("unexpected message: Missing ACK"))
 	}
 
 	return nil
 }
 
-func getCommandFromReply(reply []byte) int {
-	code, _ := strconv.Atoi(strings.SplitN(strings.SplitN(string(reply), "&", 2)[0], "=", 2)[1])
-	return code
+func getCommandFromReply(reply []byte) (int, error) {
+	return strconv.Atoi(strings.SplitN(strings.SplitN(string(reply), "&", 2)[0], "=", 2)[1])
 }
 
 func getDataFromReply(reply []byte) string {
@@ -86,14 +87,12 @@ func (p *httpProtocol) GetDataText(code int) (string, error) {
 func (p *httpProtocol) GetData(code int) (int, error) {
 	data, err := p.getRawData(code)
 	if err != nil {
-		log.Errorf(err, "GetData %s", err.Error())
 		return 0, err
 	}
 
 	result, err := strconv.Atoi(*data)
 	if err != nil {
-		log.Errorf(err, "GetData: %s", err.Error())
-		return 0, err
+		return 0, errors.WithStack(err)
 	}
 
 	return result, nil
@@ -106,24 +105,28 @@ func (p *httpProtocol) getRawData(code int) (*string, error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer resp.Body.Close()
 
 	reply, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
-	command := getCommandFromReply(reply)
+	command, err := getCommandFromReply(reply)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	dataParam := getDataFromReply(reply)
 
 	if command != code {
-		return nil, fmt.Errorf("unexpected comand reply: %d, %s", command, reply)
+		return nil, errors.WithStack(fmt.Errorf("unexpected comand reply: %d, %s", command, reply))
 	}
 
 	if strings.HasPrefix(dataParam, "NACK") {
-		return nil, fmt.Errorf("error in command: %d", command)
+		return nil, errors.WithStack(fmt.Errorf("error in command: %d", command))
 	}
 
 	return &dataParam, nil
