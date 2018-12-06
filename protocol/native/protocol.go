@@ -6,8 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/cjburchell/profilux-go/protocol"
-
-	"github.com/cjburchell/yasls-client-go"
 )
 
 type nativeProtocol struct {
@@ -100,12 +98,8 @@ func (protocol nativeProtocol) GetDataText(code int) (string, error) {
 }
 
 func (protocol nativeProtocol) GetData(code int) (int, error) {
-
-	log.Printf("Sending GetData %d", code)
 	sendCommand(code, protocol.Connection, protocol.Address)
 	for {
-
-		log.Printf("Reading Repsonce")
 		reply, err := protocol.readPacket()
 		if err != nil {
 			return 0, err
@@ -113,7 +107,6 @@ func (protocol nativeProtocol) GetData(code int) (int, error) {
 
 		err = verifyDataPacket(reply, code)
 		if err == nil {
-			log.Printf("Got valid data")
 			return getMessageData(reply), nil
 		}
 
@@ -227,12 +220,10 @@ func (protocol nativeProtocol) readPacket() (reply []byte, err error) {
 func verifyDataPacket(reply []byte, code int) error {
 	if len(reply) < 4 {
 		// strange packet size!
-		log.Warn("Expecting Packet size of at least 4")
 		return errProtocol
 	}
 
 	if reply[4] == eot {
-		log.Warn("Unexpected Message: Empty Reply")
 		return errProtocol
 	}
 
@@ -243,18 +234,15 @@ func verifyDataPacket(reply []byte, code int) error {
 		}
 
 		if reply[5] == ack {
-			log.Warn("Unexpected Message: ack")
 			return errProtocol
 		}
 
 		// should be ok we must now look for the code and verify it
 		replyCode := getGetMessageCode(reply)
 		if replyCode != code {
-			log.Warnf("Unexpected Message: Wrong Code Expecting %d Got %d", code, replyCode)
 			return errProtocol
 		}
 	} else {
-		log.Warn("Unknown message type")
 		return errProtocol
 	}
 
@@ -264,12 +252,10 @@ func verifyDataPacket(reply []byte, code int) error {
 func verifyAckPacket(reply []byte) error {
 	if len(reply) < 4 {
 		// strange packet size!
-		log.Warnf("Expecting Packet size of at least 4")
 		return errProtocol
 	}
 
 	if reply[4] == eot {
-		log.Warn("Unexpected Message: Empty Reply")
 		return errProtocol
 	}
 
@@ -280,13 +266,10 @@ func verifyAckPacket(reply []byte) error {
 		}
 
 		if reply[5] != ack {
-			replyCode := getGetMessageCode(reply)
-			log.Warnf("Unexpected Message: Code %d", replyCode)
 			return errProtocol
 		}
 
 	} else {
-		log.Warn("Unknown message type")
 		return errProtocol
 	}
 

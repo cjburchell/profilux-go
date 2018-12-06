@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cjburchell/yasls-client-go"
 	"github.com/pkg/errors"
 
 	"github.com/cjburchell/profilux-go/protocol"
@@ -27,10 +26,8 @@ func NewProtocol(address string, port int) (protocol.IProtocol, error) {
 }
 
 func (p *httpProtocol) SendData(code, data int) error {
-
 	url := fmt.Sprintf("http://%s/communication.php?dir=sel&code=%d&data=%d", p.address, code, data)
 
-	log.Debugf("SendData: %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return errors.WithStack(err)

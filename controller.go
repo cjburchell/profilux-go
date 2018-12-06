@@ -13,8 +13,6 @@ import (
 	"github.com/cjburchell/profilux-go/protocol/http"
 	"github.com/cjburchell/profilux-go/protocol/native"
 	"github.com/cjburchell/profilux-go/types"
-
-	"github.com/cjburchell/yasls-client-go"
 )
 
 const (
@@ -807,7 +805,6 @@ const (
 )
 
 func (controller *Controller) GetLPortValue(index int) (float64, error) {
-
 	value, err := controller.getData(code.L1TO10VINT1_PWMVALUE + getOffset(index, 10, 1))
 	if err != nil {
 		return 0, nil
@@ -828,24 +825,12 @@ func (controller *Controller) FeedPause(index int, activate bool) error {
 		command = (index << 16) | (0xFF << 8) | SfFeedPause
 	}
 
-	err := controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
-	if err != nil {
-		log.Errorf(err, "FeedPause: %s", err.Error())
-		return err
-	}
-
-	return nil
+	return controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
 }
 
 func (controller *Controller) ClearReminder(reminder int) error {
 	offset := getOffset(reminder, blockItemsReminder, blockSizeReminder)
-	err := controller.p.SendData(code.MEM1_NEXTMEM+offset, 0xFFFF)
-	if err != nil {
-		log.Errorf(err, "ClearReminder: %s", err.Error())
-		return err
-	}
-
-	return nil
+	return controller.p.SendData(code.MEM1_NEXTMEM+offset, 0xFFFF)
 }
 
 func (controller *Controller) ResetReminder(reminder int, period int) error {
@@ -854,46 +839,21 @@ func (controller *Controller) ResetReminder(reminder int, period int) error {
 	data := int(span.Hours() / 24)
 
 	offset := getOffset(reminder, blockItemsReminder, blockSizeReminder)
-	err := controller.p.SendData(code.MEM1_NEXTMEM+offset, data)
-	if err != nil {
-		log.Errorf(err, "ClearReminder: %s", err.Error())
-		return err
-	}
-
-	return nil
+	return controller.p.SendData(code.MEM1_NEXTMEM+offset, data)
 }
 
 func (controller *Controller) ClearLevelAlarm(index int) error {
-	err := controller.p.SendData(code.LEVEL1_ACTSTATE+getOffset(index, 3, 1), 0)
-
-	if err != nil {
-		log.Errorf(err, "ClearLevelAlarm: %s", err.Error())
-		return err
-	}
-
-	return nil
+	return controller.p.SendData(code.LEVEL1_ACTSTATE+getOffset(index, 3, 1), 0)
 }
 
 func (controller *Controller) Thunderstorm(duration int) error {
 	command := (duration << 8) | SfThunderstorm
-	err := controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
-	if err != nil {
-		log.Errorf(err, "Thunderstorm: %s", err.Error())
-		return err
-	}
-
-	return nil
+	return controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
 }
 
 func (controller *Controller) WaterChange(index int) error {
 	command := index<<16 | (0xFF << 8) | SfWaterChange
-	err := controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
-	if err != nil {
-		log.Errorf(err, "WaterChange: %s", err.Error())
-		return err
-	}
-
-	return nil
+	return controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
 }
 
 func (controller *Controller) Maintenance(activate bool, index int) error {
@@ -902,12 +862,5 @@ func (controller *Controller) Maintenance(activate bool, index int) error {
 		command = (index << 16) | (0xFF << 8) | SfMaintenance
 	}
 
-	err := controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
-
-	if err != nil {
-		log.Errorf(err, "Maintenance: %s", err.Error())
-		return err
-	}
-
-	return nil
+	return controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
 }
