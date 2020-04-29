@@ -1,12 +1,11 @@
 package profilux
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
-
-	"github.com/cjburchell/tools-go/math"
 
 	"github.com/cjburchell/profilux-go/code"
 	"github.com/cjburchell/profilux-go/protocol"
@@ -206,13 +205,19 @@ func (controller *Controller) getDataBoolConvert(code int, convert func(int) int
 	return convert(result) != 0, nil
 }
 
+func round(value float64, digits int) float64 {
+	format := fmt.Sprintf("%%.%df", digits)
+	formatted, _ := strconv.ParseFloat(fmt.Sprintf(format, value), 64)
+	return formatted
+}
+
 func (controller *Controller) getDataFloatAndRound(code int, multiplier float64, digits int) (float64, error) {
 	result, err := controller.getDataFloat(code, multiplier)
 	if err != nil {
 		return 0, err
 	}
 
-	return math.Round(result, digits), nil
+	return round(result, digits), nil
 }
 
 // endregion
