@@ -25,12 +25,9 @@ pipeline{
                         }
                         steps {
                             script{
-                                    sh """cd ${PROJECT_PATH} && go list ./... | grep -v /vendor/ > projectPaths"""
-                                    def paths = sh returnStdout: true, script:"""awk '{printf "/go/src/%s ",\$0} END {print ""}' projectPaths"""
-
                                     sh """go get github.com/pkg/errors"""
 
-                                    sh """go vet ${paths}"""
+                                    sh """go vet ./..."""
 
                                     def checkVet = scanForIssues tool: [$class: 'GoVet']
                                     publishIssues issues:[checkVet]
@@ -47,12 +44,9 @@ pipeline{
                         }
                         steps {
                             script{
-                                sh """cd ${PROJECT_PATH} && go list ./... | grep -v /vendor/ > projectPaths"""
-                                def paths = sh returnStdout: true, script:"""awk '{printf "/go/src/%s ",\$0} END {print ""}' projectPaths"""
-
                                 sh """go get github.com/pkg/errors"""
 
-                                sh """golint ${paths}"""
+                                sh """golint ./..."""
 
                                 def checkLint = scanForIssues tool: [$class: 'GoLint']
                                 publishIssues issues:[checkLint]
